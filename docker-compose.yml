@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  backend:
+    container_name: node-backend
+    build:
+      context: './backend'
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5002:5001"
+    networks:
+      - document-view-networks
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    environment:
+      NODE_ENV: production
+      MONGO_URI: mongodb+srv://jyoti25:root@cluster0.rvqakal.mongodb.net/
+      JWT_SECRET: c8ada1563b1cc8541b22b99328441ee5e9818ce86a43673d9a2e7803098972e56a4d3132684ebed2b40e96452619f782aecf1c251e7f6eb1324290d72b50192e
+      FIREBASE_CLOUD_PROJECT_ID: my-doc-view-project
+      FIREBASE_CLOUD_KEYFILE: /app/my-doc-view-project-firebase-adminsdk-eagli-e0098160f0.json
+      FIREBASE_CLOUD_BUCKET_NAME: my-doc-view-project.appspot.com
+
+  frontend:
+    container_name: react-frontend
+    build:
+      context: './frontend'
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    depends_on:
+      - backend
+    networks:
+      - document-view-networks
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      NODE_ENV: production
+
+  mongo:
+    container_name: mongo-container
+    image: mongo
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    networks:
+      - document-view-networks
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      NODE_ENV: production
+
+networks:
+  document-view-networks:
+
+volumes:
+  mongo_data:
+    driver: local

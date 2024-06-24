@@ -1,0 +1,46 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Build and push Backend Docker image
+      uses: docker/build-push-action@v2
+      with:
+        context: ./backend
+        push: true
+        tags: yourusername/your-backend-repo:latest
+
+    - name: Build and push Frontend Docker image
+      uses: docker/build-push-action@v2
+      with:
+        context: ./frontend
+        push: true
+        tags: yourusername/your-frontend-repo:latest
+
+    - name: Deploy to AWS Elastic Beanstalk
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: "us-east-1" # Change this to your region
+      run: |
+        # Install the EB CLI
+        pip install awsebcli
+        
+        # Initialize Elastic Beanstalk application
+        eb init -p docker my-mern-app --region $AWS_REGION
+        
+        # Create or deploy to the environment
+        eb create my-mern-env || eb deploy my-mern-env
